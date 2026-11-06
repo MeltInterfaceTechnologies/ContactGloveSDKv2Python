@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade build wheel twine
+
+      - name: Install runtime deps
+        run: python -m pip install python-osc
+
+      - name: Check api.md is up to date with source docstrings
+        run: python scripts/gen_api_doc.py --check
+
+      - name: Test SDK and distribution packaging
+        run: python -m unittest discover -s tests
+
+      - name: Set reproducible wheel timestamp
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+
+      - name: Build wheel
+        run: python -m build
+
+      - name: Check PyPI distribution metadata
+        run: python -m twine check --strict dist/*.whl dist/*.tar.gz
+
+      - name: Install built package
+        run: python -m pip install dist/*.whl
+
+      - name: Run smoke test
+        run: python -u examples/test_smoke.py
+
+      - name: Build customer distribution ZIP
+        run: python scripts/make_dist_package.py --skip-build
+
+      - name: Verify distribution licenses
+        run: python scripts/check_dist_licenses.py
+
+      - name: Retain customer distribution ZIP and its checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: ContactGloveSDKv2Python-${{ github.sha }}
+          path: |
+            dist/ContactGloveSDKv2Python-*.zip
+            dist/ContactGloveSDKv2Python-*.zip.sha256
+          if-no-files-found: error
+          compression-level: 0

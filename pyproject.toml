@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=77.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "contactglovesdk"
+version = "1.0.0"
+description = "ContactGlove Python SDK V2 for ContactGlove3 Pro"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE.md", "NOTICE.md", "THIRD_PARTY_NOTICES.md"]
+authors = [ { name = "Melt Interface Technologies Inc." } ]
+dependencies = [
+    "matplotlib>=3.7.5",
+    "python-osc>=1.7.5",
+]
+
+[project.urls]
+Documentation = "https://docs.melt-interface-technologies.com/en/docs/contact/sdks/contact-glove-v2-python"
+Source = "https://github.com/MeltInterfaceTechnologies/ContactGloveSDKv2Python"
+Support = "https://melt-interface-technologies.com/en/contact/"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["contactglovesdk*"]
