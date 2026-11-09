@@ -1,0 +1,116 @@
+name: Publish contactglovesdk 1.0.0 to PyPI
+
+# This initial-publication workflow is deliberately manual and version-pinned.
+# Update it through a reviewed change before publishing any later version.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pypi-contactglovesdk
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the published v1.0.0 source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: 41f39d65dad0d459e0f3135d203ad08238fe8adc
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.10'
+
+      - name: Check that the initial PyPI project does not exist
+        run: |
+          python - <<'PY'
+          import urllib.error
+          import urllib.request
+          url = 'https://pypi.org/pypi/contactglovesdk/json'
+          try:
+              urllib.request.urlopen(url, timeout=30).close()
+          except urllib.error.HTTPError as exc:
+              if exc.code != 404:
+                  raise
+          else:
+              raise SystemExit('contactglovesdk already exists on PyPI. Stop and inspect before continuing.')
+          PY
+
+      - name: Install build and validation tools
+        run: python -m pip install build twine python-osc
+
+      - name: Validate source and build the source distribution
+        run: |
+          python scripts/gen_api_doc.py --check
+          python -m unittest discover -s tests
+          export SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)"
+          python -m build --sdist
+
+      - name: Retrieve the unchanged wheel from the published GitHub release
+        run: |
+          python - <<'PY'
+          import hashlib
+          import io
+          from pathlib import Path
+          import urllib.request
+          import zipfile
+          url = 'https://github.com/MeltInterfaceTechnologies/ContactGloveSDKv2Python/releases/download/v1.0.0/ContactGloveSDKv2Python-1.0.0.zip'
+          with urllib.request.urlopen(url, timeout=60) as response:
+              data = response.read()
+          expected = '2e3494af3e1e49b7f8702b013d3b07d7c634189315687477938c55ea892e05dd'
+          assert hashlib.sha256(data).hexdigest() == expected, 'Release ZIP checksum mismatch'
+          Path('dist/ContactGloveSDKv2Python-1.0.0.zip').write_bytes(data)
+          name = 'contactglovesdk-1.0.0-py3-none-any.whl'
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              wheel = archive.read('ContactGloveSDKv2Python-1.0.0/' + name)
+          expected = '862a0b0926521c5962515702617ef738839be7a9e9e9a9338a719a1f1139036b'
+          assert hashlib.sha256(wheel).hexdigest() == expected, 'Release wheel checksum mismatch'
+          Path('dist', name).write_bytes(wheel)
+          PY
+
+      - name: Validate exactly the distributions to be published
+        run: |
+          python -m twine check --strict dist/*.whl dist/*.tar.gz
+          python scripts/check_dist_licenses.py
+          python -m pip install dist/contactglovesdk-1.0.0-py3-none-any.whl
+          python examples/test_smoke.py
+          sha256sum dist/*.whl dist/*.tar.gz
+
+      - name: Retain only wheel and source distribution
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: pypi-contactglovesdk-1.0.0
+          path: |
+            dist/contactglovesdk-1.0.0-py3-none-any.whl
+            dist/contactglovesdk-1.0.0.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish the verified distributions to PyPI
+    needs: prepare
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/contactglovesdk/
+    permissions:
+      id-token: write
+    steps:
+      - name: Retrieve this run's verified distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: pypi-contactglovesdk-1.0.0
+          path: dist
+
+      - name: Publish to PyPI with Trusted Publishing
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
+        with:
+          packages-dir: dist
+          attestations: true
