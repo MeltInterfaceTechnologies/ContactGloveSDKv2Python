@@ -89,12 +89,24 @@ class DistributionPackagingTests(unittest.TestCase):
                     self.assertIn(url, readme)
                     self.assertIn("(doc/api.md)", readme)
                     self.assertIn("python -m pip install ./contactglovesdk-", readme)
+                    self.assertIn("python -m pip install contactglovesdk", readme)
+                    self.assertIn("https://pypi.org/project/contactglovesdk/", readme)
+                    self.assertIn(
+                        "https://github.com/MeltInterfaceTechnologies/ContactGloveSDKv2Python/releases/latest",
+                        readme,
+                    )
                     contact_url = (
                         "https://melt-interface-technologies.com/en/contact/"
                         if locale == "en" else "https://melt-interface-technologies.com/contact/"
                     )
                     self.assertIn(contact_url, readme)
-                    self.assertNotIn("github.com/", readme)
+                    github_links = {
+                        target for target in re.findall(r"\]\(([^)]+)\)", readme)
+                        if "github.com/" in target
+                    }
+                    self.assertEqual(github_links, {
+                        "https://github.com/MeltInterfaceTechnologies/ContactGloveSDKv2Python/releases/latest",
+                    })
                     for target in re.findall(r"\]\(([^)]+)\)", readme):
                         if not target.startswith("https://"):
                             self.assertIn(prefix + normpath(target), archive.namelist())

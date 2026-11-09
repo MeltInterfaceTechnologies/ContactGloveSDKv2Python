@@ -14,7 +14,9 @@ data, and supports haptic requests.
 
 ## Installation
 
-### From PyPI
+### From PyPI (recommended)
+
+Install the published [contactglovesdk package on PyPI](https://pypi.org/project/contactglovesdk/) in a Python 3.10+ environment:
 
 ```sh
 python -m pip install contactglovesdk
@@ -22,7 +24,9 @@ python -m pip install contactglovesdk
 
 ### From a distribution ZIP
 
-Extract the distribution and install its bundled wheel, replacing `X.Y.Z` with its version:
+Download `ContactGloveSDKv2Python-X.Y.Z.zip` from the [latest GitHub Release](https://github.com/MeltInterfaceTechnologies/ContactGloveSDKv2Python/releases/latest). This distribution includes the wheel, examples, API reference and license documents. Choose the named distribution ZIP, not GitHub's automatically generated **Source code** archives.
+
+Download the matching `.zip.sha256` file from the same release and verify the ZIP's SHA-256 checksum. Extract the ZIP, open a terminal in the extracted directory, and install its bundled wheel. Replace `X.Y.Z` with the downloaded version:
 
 ```sh
 python -m pip install ./contactglovesdk-X.Y.Z-py3-none-any.whl

@@ -12,7 +12,9 @@ DivingStationからContactGlove3 ProのデータをOSCで受信するPython SDK�
 
 ## インストール
 
-### PyPIから
+### PyPIから（推奨）
+
+Python 3.10以上の環境で、[PyPIで公開しているcontactglovesdk](https://pypi.org/project/contactglovesdk/)をインストールします。
 
 ```sh
 python -m pip install contactglovesdk
@@ -20,7 +22,9 @@ python -m pip install contactglovesdk
 
 ### 配布ZIPから
 
-配布ZIPを展開し、同梱のwheelをインストールします。`X.Y.Z`はファイルのバージョンに置き換えてください。
+[最新のGitHub Release](https://github.com/MeltInterfaceTechnologies/ContactGloveSDKv2Python/releases/latest)から`ContactGloveSDKv2Python-X.Y.Z.zip`をダウンロードしてください。wheel、サンプル、APIリファレンス、ライセンス文書が含まれます。GitHubが自動生成する **Source code** アーカイブではなく、この名前の配布ZIPを選んでください。
+
+同じReleaseの対応する`.zip.sha256`も取得し、ZIPのSHA-256チェックサムを確認してください。ZIPを展開し、展開先のディレクトリでターミナルを開いて同梱のwheelをインストールします。`X.Y.Z`はダウンロードしたバージョンに置き換えてください。
 
 ```sh
 python -m pip install ./contactglovesdk-X.Y.Z-py3-none-any.whl
